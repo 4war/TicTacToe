@@ -16,23 +16,6 @@ namespace TicTacToe.AI
 
         private Move DecideCorrectMove(GameController game, Sign aiSign)
         {
-            if (game.Field[1,1] is Sign.Empty)
-            {
-                return new Move() { X = 1, Y = 1, Sign = aiSign };
-            }
-
-            if (game.GetEmptyCells().Count == 8)
-            {
-                var possibleMoves = new List<Move>()
-                {
-                    new Move() { X = 0, Y = 0, Sign = aiSign },
-                    new Move() { X = 2, Y = 0, Sign = aiSign },
-                    new Move() { X = 2, Y = 2, Sign = aiSign },
-                    new Move() { X = 0, Y = 2, Sign = aiSign },
-                };
-                return possibleMoves[_random.Next(possibleMoves.Count)];
-            }
-            
             return PointSearch(game, aiSign);
         }
 
@@ -49,25 +32,26 @@ namespace TicTacToe.AI
                 {
                     return GetBestMove(depthDictionary);
                 }
-                
+
                 var node = queue.Dequeue();
-                
+
                 if (!depthDictionary.ContainsKey(node.Depth))
                 {
                     depthDictionary[node.Depth] = new List<Node>();
                 }
-                
+
                 depthDictionary[node.Depth].Add(node);
 
                 var nextNodes = game.GetEmptyCells(node.Field)
                     .Select(c => new Move() { X = c.X, Y = c.Y, Sign = GetCurrentSign(!node.AIMove, aiSign) })
-                    .Select(move => new Node(GetFieldAfterMove(node.Field, move)) 
-                    { 
-                        Move = move, 
-                        Depth = node.Depth + 1, 
-                        AIMove = !node.AIMove, 
-                        Parent = node} ).ToList();
-                
+                    .Select(move => new Node(GetFieldAfterMove(node.Field, move))
+                    {
+                        Move = move,
+                        Depth = node.Depth + 1,
+                        AIMove = !node.AIMove,
+                        Parent = node
+                    }).ToList();
+
                 foreach (var nextNode in nextNodes)
                 {
                     node.Children.Add(nextNode);
@@ -87,18 +71,14 @@ namespace TicTacToe.AI
         private Move GetBestMove(Dictionary<int, List<Node>> depthDictionary)
         {
             foreach (var kvp in depthDictionary.Skip(1).Reverse().Skip(1))
-            {
-                foreach (var node in kvp.Value)
-                {
-                    node.CalculatePoints();
-                }
-            }
+            foreach (var node in kvp.Value)
+                node.CalculatePoints();
 
             var max = depthDictionary[0].First().Children.Max(x => x.Points);
-            var result = depthDictionary[0].First().Children.First(x => x.Points == max);
-            return result.Move;
+            var maxList = depthDictionary[0].First().Children.Where(x => x.Points == max).ToList();
+            return maxList[_random.Next(maxList.Count)].Move;
         }
-        
+
         private Sign GetCurrentSign(bool isAi, Sign aiSign)
         {
             if (isAi)

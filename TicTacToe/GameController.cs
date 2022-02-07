@@ -28,10 +28,10 @@ namespace TicTacToe
 
         private Timer _timer = new Timer();
         private Random _random = new Random();
-        
+
 
         public Sign[,] Field { get; set; }
-        
+
         public Sign ChosenSign { get; set; }
 
         public Result Result
@@ -48,7 +48,8 @@ namespace TicTacToe
 
         public IPlayer CurrentPlayer { get; set; }
 
-        public bool Blocked => CurrentPlayer is AIPlayer || Result != Result.None && !(CurrentPlayer is HumanPlayer && Result == Result.JustStarted);
+        public bool Blocked => CurrentPlayer is AIPlayer ||
+                               Result != Result.None && !(CurrentPlayer is HumanPlayer && Result == Result.JustStarted);
 
         public GameController(MainForm form)
         {
@@ -64,7 +65,7 @@ namespace TicTacToe
             _drawer.Reset(HorizontalCells, VerticalCells);
             Result = Result.JustStarted;
             Field = new Sign[HorizontalCells, VerticalCells];
- 
+
             UpdateChosenSide(signForHuman);
         }
 
@@ -94,7 +95,7 @@ namespace TicTacToe
                 Result = Result.JustStarted;
             }
         }
-        
+
         public List<Cell> GetEmptyCells(Sign[,] field)
         {
             var list = new List<Cell>();
@@ -105,7 +106,7 @@ namespace TicTacToe
 
             return list;
         }
-        
+
         public List<Cell> GetEmptyCells()
         {
             var list = new List<Cell>();
@@ -125,16 +126,16 @@ namespace TicTacToe
                 Result = Result.JustStarted;
                 return;
             }
-            
-            Result = CheckAllWinConditions(sign, Field) 
-                ? sign == Sign.Circle 
-                    ? Result.WinCircle 
-                    : Result.WinCross 
-                : emptyCells.Any() 
-                    ? Result.None 
+
+            Result = CheckAllWinConditions(sign, Field)
+                ? sign == Sign.Circle
+                    ? Result.WinCircle
+                    : Result.WinCross
+                : emptyCells.Any()
+                    ? Result.None
                     : Result.Draw;
         }
-           
+
 
         public bool CheckAllWinConditions(Sign mark, Sign[,] field)
         {
@@ -180,12 +181,8 @@ namespace TicTacToe
         {
             CurrentPlayer = CurrentPlayer is AIPlayer ? (IPlayer)_humanPlayer : _aiPlayer;
             if (GetEmptyCells().Any())
-            {
                 if (CurrentPlayer is AIPlayer)
-                {
                     WaitForAIToMove();
-                }
-            }
         }
 
         private void WaitForAIToMove()
@@ -201,7 +198,7 @@ namespace TicTacToe
 
             _timer.Start();
             _timer.Interval = milliseconds;
-            _timer.Enabled  = true;
+            _timer.Enabled = true;
 
             _timer.Tick += (s, e) =>
             {
@@ -209,7 +206,7 @@ namespace TicTacToe
                 _timer.Stop();
             };
 
-            for (;_timer.Enabled;)
+            for (; _timer.Enabled;)
             {
                 Application.DoEvents();
             }
