@@ -11,18 +11,7 @@ namespace TicTacToe.AI
 
         public Move MakeMove(GameController game, Sign aiSign)
         {
-            //return DecideRandomMove(game, aiSign);
             return DecideCorrectMove(game, aiSign);
-        }
-
-        private Move DecideRandomMove(GameController game, Sign aiSign)
-        {
-            var randomList = game.GetEmptyCells()
-                .Select(c => new Move() { X = c.X, Y = c.Y, Sign = aiSign })
-                .ToList();
-
-            var randomMove = randomList[_random.Next(randomList.Count)];
-            return randomMove;
         }
 
         private Move DecideCorrectMove(GameController game, Sign aiSign)
@@ -44,74 +33,69 @@ namespace TicTacToe.AI
                 return possibleMoves[_random.Next(possibleMoves.Count)];
             }
             
-            return WidthSearch(game, aiSign);
+            return PointSearch(game, aiSign);
         }
 
-        private Move WidthSearch(GameController game, Sign aiSign)
+        private Move PointSearch(GameController game, Sign aiSign)
         {
+            var startNode = new Node(game.Field) { Points = 0 };
+            var depthDictionary = new Dictionary<int, List<Node>>();
             var queue = new Queue<Node>();
-            var startNode = new Node(game.Field);
             queue.Enqueue(startNode);
-            var visited = new HashSet<Node>();
-            var theDeepestNode = startNode;
 
-            for (; ;)
+            for (;;)
             {
                 if (!queue.Any())
                 {
-                    return GetPrimalMove(theDeepestNode);
+                    return GetBestMove(depthDictionary);
                 }
                 
                 var node = queue.Dequeue();
-                if (visited.Contains(node))
+                
+                if (!depthDictionary.ContainsKey(node.Depth))
                 {
-                    continue;
+                    depthDictionary[node.Depth] = new List<Node>();
                 }
-                visited.Add(node);
+                
+                depthDictionary[node.Depth].Add(node);
 
                 var nextNodes = game.GetEmptyCells(node.Field)
-                    .Select(c => new Move() { X = c.X, Y = c.Y, Sign = GetCurrentSign(!node.isAI, aiSign) })
+                    .Select(c => new Move() { X = c.X, Y = c.Y, Sign = GetCurrentSign(!node.AIMove, aiSign) })
                     .Select(move => new Node(GetFieldAfterMove(node.Field, move)) 
-                        { 
-                            Move = move, 
-                            Depth = node.Depth + 1, 
-                            isAI = !node.isAI, 
-                            Parent = node} ).ToList();
+                    { 
+                        Move = move, 
+                        Depth = node.Depth + 1, 
+                        AIMove = !node.AIMove, 
+                        Parent = node} ).ToList();
                 
                 foreach (var nextNode in nextNodes)
                 {
-                    if (visited.Contains(nextNode))
+                    node.Children.Add(nextNode);
+                    nextNode.Parent = node;
+                    if (game.CheckAllWinConditions(GetCurrentSign(nextNode.AIMove, aiSign), nextNode.Field))
                     {
-                        continue;
+                        nextNode.Points = nextNode.AIMove ? 10 : -10;
                     }
-                    
-                    if (game.CheckAllWinConditions(GetCurrentSign(nextNode.isAI, aiSign), nextNode.Field))
+                    else
                     {
-                        if (nextNode.isAI)
-                        {
-                            return GetPrimalMove(nextNode);
-                        }
-                        else 
-                        {
-                            foreach (var next in nextNodes)
-                            {
-                                visited.Add(next);
-                            }
-                            break;
-                        }
+                        queue.Enqueue(nextNode);
                     }
-
-                    if (nextNode.Depth > theDeepestNode.Depth)
-                        theDeepestNode = nextNode;
-                    queue.Enqueue(nextNode);
                 }
             }
         }
 
-        private Move GetPrimalMove(Node node)
+        private Move GetBestMove(Dictionary<int, List<Node>> depthDictionary)
         {
-            var result = node;
-            for (; result.Depth > 1; result = result.Parent){}
+            foreach (var kvp in depthDictionary.Skip(1).Reverse().Skip(1))
+            {
+                foreach (var node in kvp.Value)
+                {
+                    node.CalculatePoints();
+                }
+            }
+
+            var max = depthDictionary[0].First().Children.Max(x => x.Points);
+            var result = depthDictionary[0].First().Children.First(x => x.Points == max);
             return result.Move;
         }
         
