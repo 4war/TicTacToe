@@ -34,7 +34,7 @@ namespace TicTacToe
             this.components = new System.ComponentModel.Container();
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            //this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 600);
             this.Text = "TicTacToe";
